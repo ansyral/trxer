@@ -144,31 +144,31 @@
                 <tr class="odd">
                   <th class="column1 statusCount">Total</th>
                   <td class="statusCount" id="total-test-count">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@total" />
+                    <xsl:value-of select="'0'" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Executed</th>
                   <td class="statusCount" id="executed-test-count">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@executed" />
+                    <xsl:value-of select="'0'" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Passed</th>
                   <td class="statusCount" id="passed-test-count">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@passed" />
+                    <xsl:value-of select="'0'" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Failed</th>
                   <td class="statusCount" id="failed-test-count">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@failed" />
+                    <xsl:value-of select="'0'" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Inconclusive</th>
                   <td class="statusCount" id="inconclusive-test-count">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@inconclusive" />
+                    <xsl:value-of select="'0'" />
                   </td>
                 </tr>
                 <tr>
@@ -271,6 +271,7 @@
                           <th scope="col" class="TestsTable" abbr="Status">Status</th>
                           <th scope="col" class="TestsTable" abbr="Test">Test</th>
                           <th scope="col" class="TestsTable" abbr="Message">Message</th>
+                          <th scope="col" class="TestsTable" abbr="Message">Attachments</th>
                           <th scope="col" class="TestsTable" abbr="Owner">Owner</th>
                           <th scope="col" class="TestsTable" abbr="Duration">Duration</th>
                         </tr>
@@ -342,6 +343,7 @@
                           <th scope="col" class="TestsTable" abbr="Status">Status</th>
                           <th scope="col" class="TestsTable" abbr="Test">Test</th>
                           <th scope="col" class="TestsTable" abbr="Message">Message</th>
+                          <th scope="col" class="TestsTable" abbr="Message">Attachments</th>
                           <th scope="col" class="TestsTable" abbr="Message">Owner</th>
                           <th scope="col" class="TestsTable" abbr="Exception">Duration</th>
                         </tr>
@@ -371,6 +373,8 @@
                                 </td>
                                 <td class="Messages">
                                 </td>
+                                <td class="Messages">
+                                </td>
                                 <td class="Message">
                                   <xsl:variable name="nameSet" select="/t:TestRun/t:TestDefinitions/t:UnitTest[@id=$testId]/t:Owners/t:Owner"/>
                                   <xsl:variable name="nameCount" select="count($nameSet)"/>
@@ -397,6 +401,7 @@
                                         <th scope="col" class="TestsTable" abbr="Status">Status</th>
                                         <th scope="col" class="TestsTable" abbr="Test">Test</th>
                                         <th scope="col" class="TestsTable" abbr="Message">Message</th>
+                                        <th scope="col" class="TestsTable" abbr="Message">Attachments</th>
                                         <th scope="col" class="TestsTable" abbr="Message">Owner</th>
                                         <th scope="col" class="TestsTable" abbr="Exception">Duration</th>
                                       </tr>
@@ -566,6 +571,12 @@
             <xsl:with-param name="showDetails" select="$showDetails" />
           </xsl:call-template>
         </td>
+        <td class="Messages">
+          <xsl:call-template name="attachments">
+            <xsl:with-param name="testId" select="$testId" />
+            <xsl:with-param name="executionId" select="$executionId" />
+          </xsl:call-template>
+        </td>
         <td class="Message">
           <xsl:variable name="nameSet" select="/t:TestRun/t:TestDefinitions/t:UnitTest[@id=$testId]/t:Owners/t:Owner"/>
           <xsl:variable name="nameCount" select="count($nameSet)"/>
@@ -668,5 +679,20 @@
 
     </xsl:for-each>
   </xsl:template>
+
+  <xsl:template name="attachments">
+    <xsl:param name="testId" />
+    <xsl:param name="executionId" />
+    <xsl:variable name="deploymentRoot" select="/t:TestRun/t:TestSettings/t:Deployment/@runDeploymentRoot"/>
+    <xsl:variable name="CurTest" select="/t:TestRun/t:Results//t:UnitTestResult[@executionId=$executionId]"/>
+    <ul>
+      <xsl:for-each select="$CurTest/t:ResultFiles/t:ResultFile">
+        <li>
+          <xsl:value-of select="concat($deploymentRoot, '/In/', $executionId, '/', @path)"/>
+        </li>
+      </xsl:for-each>
+    </ul>
+  </xsl:template>
+    
 </xsl:stylesheet>
 
