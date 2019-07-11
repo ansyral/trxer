@@ -143,31 +143,31 @@
               <tbody>
                 <tr class="odd">
                   <th class="column1 statusCount">Total</th>
-                  <td class="statusCount">
+                  <td class="statusCount" id="total-test-count">
                     <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@total" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Executed</th>
-                  <td class="statusCount">
+                  <td class="statusCount" id="executed-test-count">
                     <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@executed" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Passed</th>
-                  <td class="statusCount">
+                  <td class="statusCount" id="passed-test-count">
                     <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@passed" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Failed</th>
-                  <td class="statusCount">
+                  <td class="statusCount" id="failed-test-count">
                     <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@failed" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Inconclusive</th>
-                  <td class="statusCount">
+                  <td class="statusCount" id="inconclusive-test-count">
                     <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@inconclusive" />
                   </td>
                 </tr>
@@ -240,7 +240,7 @@
               </tbody>
             </table>
           </div>
-          <xsl:variable name="testsFailedSet" select="//t:TestRun/t:Results//t:UnitTestResult[@outcome='Failed' and not(child::InnerResults)]" />
+          <xsl:variable name="testsFailedSet" select="//t:TestRun/t:Results//t:UnitTestResult[@outcome='Failed' and not(child::*[name()='InnerResults'])]" />
           <xsl:variable name="testsFailedCount" select="count(testsFailedSet)" />
           <xsl:if test="$testsFailedSet">
             <table id="ReportsTable">
@@ -282,6 +282,7 @@
                             <xsl:with-param name="testId" select="@testId" />
                             <xsl:with-param name="executionId" select="@executionId" />
                             <xsl:with-param name="testDescription" select="./../t:Description" />
+                            <xsl:with-param name="showDetails" select="'true'" />
                           </xsl:call-template>
                         </xsl:for-each>
                       </tbody>
@@ -350,15 +351,81 @@
                         <xsl:for-each select="$testsSet">
                           <xsl:variable name="testId" select="./../@id" />
                           <xsl:variable name="curTests" select="/t:TestRun/t:Results//t:UnitTestResult[@testId=$testId]" />
-                          <xsl:variable name="parentTest" select="$curTests[child::InnerResults]" />
-                          <xsl:variable name="leafTests" select="$curTests[not(child::InnerResults)]" />
-                          <xsl:for-each select="$leafTests">
-                            <xsl:call-template name="tDetails">
-                              <xsl:with-param name="testId" select="$testId" />
-                              <xsl:with-param name="executionId" select="./@executionId" />
-                              <xsl:with-param name="testDescription" select="./../t:Description" />
-                            </xsl:call-template>
-                          </xsl:for-each>
+                          <xsl:variable name="parentTest" select="$curTests[child::*[name()='InnerResults']]" />
+                          <xsl:variable name="leafTests" select="$curTests[not(child::*[name()='InnerResults'])]" />
+                          <xsl:choose>
+                            <xsl:when test="$parentTest">
+                              <tr class="GroupTest">
+                                <th scope="row" class="column1">
+                                  <xsl:value-of select="trxreport:GetShortDateTime($parentTest/@startTime)" />
+                                </th>
+                                <xsl:call-template name="tStatus">
+                                  <xsl:with-param name="testId" select="$testId" />
+                                  <xsl:with-param name="executionId" select="$parentTest/@executionId" />
+                                </xsl:call-template>
+                                <td class="Function">
+                                  <xsl:value-of select="$parentTest/@testName" />
+                                  <div class="OpenMoreButton" onclick="ShowHide('{generate-id($parentTest/@executionId)}TestsContainer','{generate-id($parentTest/@executionId)}Button','Show Test cases','Hide Test cases');">
+                                    <div class="MoreButtonText" id="{generate-id($parentTest/@executionId)}Button">Show Test Cases</div>
+                                  </div>
+                                </td>
+                                <td class="Messages">
+                                </td>
+                                <td class="Message">
+                                  <xsl:variable name="nameSet" select="/t:TestRun/t:TestDefinitions/t:UnitTest[@id=$testId]/t:Owners/t:Owner"/>
+                                  <xsl:variable name="nameCount" select="count($nameSet)"/>
+                                  <xsl:for-each select="$nameSet">
+                                    <xsl:value-of select="@name"/>
+                                    <xsl:if test="$nameCount &gt;=position()+1 ">
+                                      <br/>
+                                    </xsl:if>
+                                  </xsl:for-each>
+                                </td>
+                                <td class="Message">
+                                  <xsl:value-of select="trxreport:ToExactTimeDefinition($parentTest/@duration)" />
+                                </td>
+                              </tr>
+                              <tr id="{generate-id($parentTest/@executionId)}TestsContainer" class="hiddenRow">
+                                <!--Outer-->
+                                <td colspan="6">
+                                  <div id="exceptionArrow">↳</div>
+                                  <table>
+                                    <!--Inner-->
+                                    <thead>
+                                      <tr class="odd">
+                                        <th scope="col" class="TestsTable">Time</th>
+                                        <th scope="col" class="TestsTable" abbr="Status">Status</th>
+                                        <th scope="col" class="TestsTable" abbr="Test">Test</th>
+                                        <th scope="col" class="TestsTable" abbr="Message">Message</th>
+                                        <th scope="col" class="TestsTable" abbr="Message">Owner</th>
+                                        <th scope="col" class="TestsTable" abbr="Exception">Duration</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <xsl:for-each select="$leafTests">
+                                        <xsl:call-template name="tDetails">
+                                          <xsl:with-param name="testId" select="$testId" />
+                                          <xsl:with-param name="executionId" select="./@executionId" />
+                                          <xsl:with-param name="testDescription" select="./../t:Description" />
+                                          <xsl:with-param name="showDetails" select="'false'" />
+                                        </xsl:call-template>
+                                      </xsl:for-each>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </xsl:when>
+                            <xsl:otherwise>
+                              <xsl:for-each select="$leafTests">
+                                <xsl:call-template name="tDetails">
+                                  <xsl:with-param name="testId" select="$testId" />
+                                  <xsl:with-param name="executionId" select="./@executionId" />
+                                  <xsl:with-param name="testDescription" select="./../t:Description" />
+                                <xsl:with-param name="showDetails" select="'false'" />
+                                </xsl:call-template>
+                              </xsl:for-each>
+                            </xsl:otherwise>
+                          </xsl:choose>
                         </xsl:for-each>
                       </tbody>
                       <!--End of package content-->
@@ -383,7 +450,7 @@
               </tr>
             </thead>
             <tbody>
-              <xsl:for-each select="/t:TestRun/t:Results//t:UnitTestResult[not(child::InnerResults)]">
+              <xsl:for-each select="/t:TestRun/t:Results//t:UnitTestResult[not(child::*[name()='InnerResults'])]">
                 <xsl:sort select="@duration" order="descending"/>
                 <xsl:if test="position() &gt;= 1 and position() &lt;=5">
                   <xsl:variable name="testId" select="@testId" />
@@ -455,7 +522,7 @@
           <td class="warn">Warn</td>
         </xsl:when>
         <xsl:when test="@outcome='NotExecuted'">
-          <td class="info">NotExecuted</td>
+          <td class="notExecuted">NotExecuted</td>
         </xsl:when>
         <xsl:otherwise>
           <td class="info">OTHER</td>
@@ -469,6 +536,7 @@
     <xsl:param name="testId" />
     <xsl:param name="executionId" />
     <xsl:param name="testDescription" />
+    <xsl:param name="showDetails" />
     <xsl:for-each select="/t:TestRun/t:Results//t:UnitTestResult[@executionId=$executionId]">
       <tr class="Test">
         <th scope="row" class="column1">
@@ -495,6 +563,7 @@
           <xsl:call-template name="debugInfo">
             <xsl:with-param name="testId" select="$testId" />
             <xsl:with-param name="executionId" select="$executionId" />
+            <xsl:with-param name="showDetails" select="$showDetails" />
           </xsl:call-template>
         </td>
         <td class="Message">
@@ -511,6 +580,7 @@
           <xsl:value-of select="trxreport:ToExactTimeDefinition(@duration)" />
         </td>
       </tr>
+      <xsl:if test="$showDetails='true'">
       <tr id="{generate-id($executionId)}Stacktrace" class="hiddenRow">
         <!--Outer-->
         <td colspan="6">
@@ -527,6 +597,7 @@
           </table>
         </td>
       </tr>
+      </xsl:if>
     </xsl:for-each>
   </xsl:template>
 
@@ -566,6 +637,7 @@
   <xsl:template name="debugInfo">
     <xsl:param name="testId" />
     <xsl:param name="executionId" />
+    <xsl:param name="showDetails" />
     <xsl:for-each select="/t:TestRun/t:Results//t:UnitTestResult[@executionId=$executionId]/t:Output">
 
       <xsl:variable name="MessageErrorStacktrace" select="t:ErrorInfo/t:StackTrace"/>
@@ -573,7 +645,7 @@
       <xsl:variable name="StdOut" select="t:StdOut"/>
       <xsl:if test="$StdOut or $MessageErrorStacktrace">
         <xsl:value-of select="$StdOut"/>
-        <xsl:if test="$MessageErrorStacktrace">
+        <xsl:if test="$MessageErrorStacktrace and $showDetails='true'">
           <a style="float:right;" id="{generate-id($executionId)}StacktraceToggle" href="javascript:ShowHide('{generate-id($executionId)}Stacktrace','{generate-id($executionId)}StacktraceToggle','Show Stacktrace','Hide Stacktrace');">Show Stacktrace</a>
         </xsl:if>
         <xsl:if test="$StdOut">

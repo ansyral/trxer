@@ -158,6 +158,7 @@ function CreateText() {
 var allPassed = 0;
 var allFailed = 0;
 var allWarns = 0;
+var allNotExecuted = 0;
 
 var myData = [];
 
@@ -165,10 +166,11 @@ var myParsedData = [];
 
 function CalculateTotalPrecents() {
 
-    var totalTests = allPassed + allFailed + allWarns;
-    var passedPrec = (allPassed / totalTests) * 100;
-    var failedPrec = (allFailed / totalTests) * 100;
-    var warnPrec = (allWarns / totalTests) * 100;
+    var allExecuted = allPassed + allFailed + allWarns;
+    var totalTests = allExecuted + allNotExecuted;
+    var passedPrec = (allPassed / allExecuted) * 100;
+    var failedPrec = (allFailed / allExecuted) * 100;
+    var warnPrec = (allWarns / allExecuted) * 100;
 
     myData.push(passedPrec);
     myData.push(failedPrec);
@@ -178,6 +180,11 @@ function CalculateTotalPrecents() {
     myParsedData.push(allFailed + " (" + Math.round(failedPrec).toFixed(2) + "%)");
     myParsedData.push(allWarns + " (" + Math.round(warnPrec).toFixed(2) + "%)");
 
+    document.getElementById("total-test-count").textContent = totalTests.toString();
+    document.getElementById("executed-test-count").textContent = allExecuted.toString();
+    document.getElementById("passed-test-count").textContent = allPassed.toString();
+    document.getElementById("failed-test-count").textContent = allFailed.toString();
+    document.getElementById("inconclusive-test-count").textContent = allWarns.toString();
     document.getElementById('dataViewer').innerHTML = "<tr class='odd'><td><canvas id='canvas' width='240' height='150'>This text is displayed if your browser does not support HTML5 Canvas.</canvas></td></tr>";
     CreatePie();
     AddEventListener();
@@ -187,6 +194,7 @@ function CalculateTestsStatuses(testContaineId, canvasId) {
     var totalPassed = 0;
     var totalFailed = 0;
     var totalInconclusive = 0;
+    var totalNotExecuted = 0;
     var e = document.getElementById(testContaineId);
     var tests = e.getElementsByClassName('Test');
     for (var i = 0; i < tests.length; i++) {
@@ -203,14 +211,17 @@ function CalculateTestsStatuses(testContaineId, canvasId) {
             totalPassed++;
             allPassed++;
         }
+        else if (test.getElementsByClassName('notExecuted').length > 0) {
+            totalNotExecuted++;
+            allNotExecuted++;
+        }
     }
 
-    var totalTests = totalFailed + totalInconclusive + totalPassed;
-    var passedPrec = (totalPassed / totalTests) * 100;
-    var failedPrec = (totalFailed / totalTests) * 100;
-    var warnPrec = (totalInconclusive / totalTests) * 100;
-
-
+    var totalExecuted = totalFailed + totalInconclusive + totalPassed;
+    var totalTests = totalExecuted + totalNotExecuted;
+    var passedPrec = (totalPassed / totalExecuted) * 100;
+    var failedPrec = (totalFailed / totalExecuted) * 100;
+    var warnPrec = (totalInconclusive / totalExecuted) * 100;
     CreateHorizontalBars(canvasId, passedPrec, failedPrec, warnPrec);
 }
 
