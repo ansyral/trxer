@@ -144,49 +144,49 @@
                 <tr class="odd">
                   <th class="column1 statusCount">Total</th>
                   <td class="statusCount" id="total-test-count">
-                    <xsl:value-of select="'0'" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Executed</th>
                   <td class="statusCount" id="executed-test-count">
-                    <xsl:value-of select="'0'" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome != 'NotExecuted' and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Passed</th>
                   <td class="statusCount" id="passed-test-count">
-                    <xsl:value-of select="'0'" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome = 'Passed' and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Failed</th>
                   <td class="statusCount" id="failed-test-count">
-                    <xsl:value-of select="'0'" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome = 'Failed' and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Inconclusive</th>
                   <td class="statusCount" id="inconclusive-test-count">
-                    <xsl:value-of select="'0'" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome='Inconclusive' and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Error</th>
                   <td class="statusCount">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@error" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome='Error' and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Warning</th>
                   <td class="statusCount">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@warning" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome='Warn' and not(t:InnerResults)])" />
                   </td>
                 </tr>
                 <tr>
                   <th scope="row" class="column1 statusCount">Timeout</th>
                   <td class="statusCount">
-                    <xsl:value-of select="/t:TestRun/t:ResultSummary/t:Counters/@timeout" />
+                    <xsl:value-of select="count(//t:UnitTestResult[@outcome='Timeout' and not(t:InnerResults)])" />
                   </td>
                 </tr>
               </tbody>
@@ -366,6 +366,7 @@
                                   <xsl:with-param name="executionId" select="$parentTest/@executionId" />
                                 </xsl:call-template>
                                 <td class="Function">
+                                  <xsl:value-of select="trxreport:RemoveAssemblyName(/t:TestRun/t:TestDefinitions/t:UnitTest[@id=$testId]/t:TestMethod/@className)"/>.
                                   <xsl:value-of select="$parentTest/@testName" />
                                   <div class="OpenMoreButton" onclick="ShowHide('{generate-id($parentTest/@executionId)}TestsContainer','{generate-id($parentTest/@executionId)}Button','Show Test cases','Hide Test cases');">
                                     <div class="MoreButtonText" id="{generate-id($parentTest/@executionId)}Button">Show Test Cases</div>
@@ -555,6 +556,7 @@
         </xsl:call-template>
 
         <td class="Function">
+          <xsl:value-of select="trxreport:RemoveAssemblyName(/t:TestRun/t:TestDefinitions/t:UnitTest[@id=$testId]/t:TestMethod/@className)"/>.
           <xsl:value-of select="@testName" />
 
           <xsl:call-template name="imageExtractor">
